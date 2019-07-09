@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<!--
+Copyright 2018 The Go Authors. All rights reserved.
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file.
+-->
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Go wasm</title>
+</head>
+
+<body>
+
+<div id="funcList"></div>
+
+
+<label for="value1">
+    <input type="number" id="value1"/>
+</label>
+
+<label for="value2">
+    <input type="number" id="value2"/>
+</label>
+
+<label for="value3">
+    <input type="text" id="value3"/>
+</label>
+
+<div id="sum"></div>
+<div id="difference"></div>
+<div id="arraySum"></div>
+
+
+<button id="addButton">Add</button>
+<button id="subtractButton">Subtract</button>
+<button id="addArray">Add Array</button>
+
+
+<script src="wasm_exec.js"></script>
+
+<script>
+    (() => {
+
+        if (!WebAssembly.instantiateStreaming) {
+            // polyfill
+            WebAssembly.instantiateStreaming = async (resp, importObject) => {
+                const source = await (await resp).arrayBuffer();
+                return await WebAssembly.instantiate(source, importObject);
+            };
+        }
+
+        const go = new Go();
+
+        let mod, inst;
+
+        WebAssembly.instantiateStreaming(fetch("lib.wasm"), go.importObject).then(
+            async result => {
+                mod = result.module;
+                inst = result.instance;
+                await go.run(inst);
+                // document.getElementById("runButton").disabled = false;
+            }
+        );
+
+        async function run() {
+            await go.run(inst);
+            inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
+        }
+
+        // listen to click of the Buttons
+
+        document.getElementById("addButton").onclick = (event) => {
+
+            debugger;
+            const val1 = document.getElementById("value1").value;
+            const val2 = document.getElementById("value2").value;
+
+            const res = add(parseInt(val1), parseInt(val2));
+
+            document.getElementById("sum").innerHTML = res;
+        };
+
+        document.getElementById("subtractButton").onclick = (event) => {
+
+            debugger;
+            const val1 = document.getElementById("value1").value;
+            const val2 = document.getElementById("value2").value;
+
+            const res = subtract(parseInt(val1), parseInt(val2));
+
+            document.getElementById("difference").innerHTML = res;
+        };
+
+        document.getElementById("addArray").onclick = (event) => {
+
+            debugger;
+            const val = document.getElementById("value3").value;
+
+            const list = val.split(",").map(elem => parseInt(elem));
+
+            const res = addArray(list);
+
+            document.getElementById("arraySum").innerHTML = res;
+        };
+    })();
+
+</script>
+</body>
+</html>
